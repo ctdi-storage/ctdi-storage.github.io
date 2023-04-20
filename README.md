@@ -1,53 +1,52 @@
 # CTDI-CSI-driver 
 
-> CTDI CSI 驱动程序的文档
+> Documentation for the CTDI CSI driver
 
-> 适用于块存储 V1.0.0 的 CTDI CSI 插件
+> CTDI CSI plugin for block storage V1.0.0
+
+## I. Overview
+
+The CTDI CSI plugin implements the K8S CSI interface, supporting dynamic volume creation and mounting into workloads.
+
+The CTDI CSI plugin has been tested in a Kubernetes v1.24.8 environment.
+
+This document provides more detailed information on configuring and deploying the CTDI Storage Block Storage driver, as well as detailed instructions on how to use the block storage driver.
 
 
-## 一.概要说明
 
-CTDI CSI 插件实现了 K8S CSI 接口，它支持动态创建卷并挂载到工作负载中。
+## II. Prerequisites
 
-CTDI CSI 插件已经在 Kubernetes v1.24.8 环境进行了测试。
+Before getting started, make sure you have done the following:
 
-本文将为您提供有关 CTDI 云磐中块存储驱动程序配置和部署的更多详细信息，并详细介绍块存储驱动程序的用法。
+- Deployed Kubernetes v1.24.8 and it is running properly.
+- Obtained the latest version of the CTDI CSI container image.
 
 
-## 二.开始前的准备
 
-在开始之前，请确保您已做好如下准备：
+## III. Deploying the CTDI CSI Driver
 
-- 部署完成 Kubernetes v1.24.8 ，且Kubernetes v1.24.8 可以正常运行；
+In this section, you will learn how to deploy the CTDI CSI Driver and some necessary sidecar containers.
 
-- 获取最新版本的CTDI CSI 容器镜像。
+### 1. Prepare the Cluster
 
-  
+You need to prepare a compatible version of the cluster.
 
-## 三.部署 CTDI CSI 驱动程序
+| **Cluster**  | **Version** |
+| :----------- | ----------- |
+| Kubernetes   | 1.24.8+     |
+| CTDI Storage | 3.4+        |
 
-在本节，您将了解如何部署 CTDI CSI 驱动程序和一些必要的sidecar容器。
+### 2. Configure the CTDI  Storage Management System
 
-### 1.准备集群
+You need to create the corresponding storage pool "kubernetes" in the CTDI Storage Management System.
 
-您需要准备适配版本的集群。
+### 3. Configure Kubernetes 
 
-| 集群       | 版本    |
-| :--------- | ------- |
-| Kubernetes | 1.24.8+ |
-| CTDI 云磐  | 3.4+    |
-
-### 2.配置 CTDI 云磐管理系统
-
-您需要在 CTDI 云磐管理系统中创建相应的存储池 kubernetes 。
-
-### 3. 配置 Kubernetes 
-
-您需要获取 csms-server 的配置信息并进行部署。
+You need to obtain the configuration information for csms-server and deploy it.
 
 #### 3.1 CSI configmap
 
-##### 3.1.1 获取 csms-server 的配置信息
+##### 3.1.1 Obtain the Configuration Information for csms-server
 
 ```sh
 ---
@@ -68,64 +67,66 @@ metadata:
   name: ctdi-csi-config
 ```
 
-其中部分名词释义见下表 ：
+The following table provides definitions for some of the terms used:
 
-| 名词     | 含义                                     |
-| -------- | ---------------------------------------- |
-| apiUrl   | 对外接口地址                             |
-| username | 云磐管理系统-登录用户名                  |
-| password | 云磐管理系统-登录密码 base 64 编码后的值 |
+| **Term** | **Definition**                                               |
+| -------- | ------------------------------------------------------------ |
+| apiUrl   | The external interface address.                              |
+| username | Login username for the CTDI Storage Management System.       |
+| password | Base64-encoded login password for the CTDI Storage Management System. |
 
-##### 3.1.2 部署 CSI configmap
+##### 3.1.2 Deploy the CSI ConfigMap
 
 ```sh
 kubectl apply -f csi-config-map.yaml
 ```
 
-### 4. CTDI CSI部署
+### 4. Deploy CTDI CSI
 
-您需要获取并部署全部部署脚本、获取镜像、验证部署后的环境。
+You need to obtain and deploy the complete deployment script, obtain the image, and verify the deployed environment.
 
-#### 4.1 获取部署脚本
+#### 4.1 Obtain the Deployment Scripts
 
-您可以通过CTDI CSI源码获取部署脚本，路径为[./deploy/block/kubernetes]()
+You can obtain the deployment script through the CTDI CSI source code, located at [./deploy/block/kubernetes]()
 
 - csi-provisioner-rbac.yaml
 - csi-nodeplugin-rbac.yaml
 - ctdicsi-rbdplugin-provisioner.yaml
 - ctdicsi-rbdplugin.yaml
 
-#### 4.2 部署上述全部脚本
+#### 4.2 Deploy all scripts
 
 ```sh
 kubectl apply -f csi-provisioner-rbac.yaml
 kubectl apply -f csi-nodeplugin-rbac.yaml
-kubectl apply -f csi-rbdplugin-provisioner.yaml
-kubectl apply -f csi-rbdplugin.yaml
+kubectl apply -f ctdicsi-rbdplugin-provisioner.yaml
+kubectl apply -f ctdicsi-rbdplugin.yaml
 ```
 
-#### 4.3 获取镜像
+#### 4.3 Obtain the Image
 
-CTDI CSI 1.0.0 版本的镜像包含：
+The CTDI CSI 1.0.0 version image contains:
 
 - k8s.gcr.io/sig-storage/csi-provisioner:v3.2.1
 - registry.k8s.io/sig-storage/csi-snapshotter:v6.0.1
 - registry.k8s.io/sig-storage/csi-attacher:v3.5.0
 - registry.k8s.io/sig-storage/csi-resizer:v1.5.0
 - k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.5.1
-- ctdi.io/ctdicsi/ctdicsi:v1.0.0
+- hsh.io/ctdicsi/ctdicsi:v1.0.0
 
-#### 4.4 验证部署后的环境
+#### 4.4 Verify the Deployed Environment
 
 ![image-1](./assets/4.4deploy.png)
 
-## 四.卷的使用
 
-部署完成后，您可以创建卷、拷贝卷、创建卷快照、克隆卷、应用卷到POD。
 
-### 1.创建卷
+## IV. Usage of volume
 
-#### 1.1 创建storageclass
+After deployment, you can create volumes, copy volumes, create volume snapshots, clone volumes, and apply volumes to PODs.
+
+### 1. Create a Volume
+
+#### 1.1 Create a StorageClass
 
 ```sh
 [root@node1 kubernetes]# cat ctdi-rbd-sc.yaml 
@@ -151,14 +152,13 @@ reclaimPolicy: Delete
 allowVolumeExpansion: true
 mountOptions:
    - discard
-
 ```
 
 ```sh
 kubectl apply -f ctdi-rbd-sc.yaml
 ```
 
-#### 1.2 基于SC 创建PVC
+#### 1.2 Create a PVC based on the SC
 
 ```sh
 [root@node1 kubernetes]# cat tpvc-block.yaml 
@@ -180,19 +180,19 @@ spec:
 [root@node1 kubernetes]# kubectl apply -f tpvc-block.yaml 
 persistentvolumeclaim/raw-block-pvc created
 
-## 查看当前创建的PVC
+## View currently created PVCs.
 [root@node1 kubernetes]# kubectl get pvc
 NAME            STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
 raw-block-pvc   Bound    pvc-3138c2a4-e0f8-4ccf-8fd0-8014f6d0eac1   1Gi        RWO            ctdi-rbd-sc    5s
 ```
 
-#### 1.3 查看 CTDI 云磐管理系统中创建的卷
+#### 1.3 View the volumes created in the CTDI Storage Management System
 
 ![image-2](./assets/1.3create-block.png)
 
-### 2.拷贝卷
+### 2. Copy a Volume
 
-#### 2.1 创建拷贝卷
+#### 2.1 Create a Copied Volume
 
 ```sh
 [root@node1 kubernetes]# cat pvccopyrbd.yaml 
@@ -224,13 +224,13 @@ raw-block-pvc     Bound    pvc-3138c2a4-e0f8-4ccf-8fd0-8014f6d0eac1   1Gi       
 rbd-pvc-copypvc   Bound    pvc-9d9ae9e1-c343-4dfc-98f6-8aa7bd0f1b2e   2Gi        RWO            ctdi-rbd-sc    7s
 ```
 
-#### 2.2 查看 CTDI 云磐管理系统中拷贝的卷
+#### 2.2 View the copied volumes in the CTDI Storage Management System
 
 ![image-3](./assets/2.2copy-block.png)
 
-### 3创建卷快照
+### 3. Create a Volume Snapshot
 
-#### 3.1 创建卷快照
+#### 3.1 Create a Volume Snapshot
 
 ```sh
 [root@node1 kubernetes]# cat snapshot-block.yaml 
@@ -260,13 +260,13 @@ NAME                     READYTOUSE   SOURCEPVC       SOURCESNAPSHOTCONTENT   RE
 raw-block-pvc-snapshot   true         raw-block-pvc                           1Gi           csi-rbdplugin-snapclass   snapcontent-abfdb78e-9e33-4cdc-9f6f-f84c35b96815   2m14s          6s
 ```
 
-#### 3.2 查看 CTDI 云磐管理系统中的卷快照
+#### 3.2 View the volume snapshots in the CTDI Storage Management System
 
 ![image-4](./assets/3.2snap.png)
 
-### 4克隆卷
+### 4. Clone a Volume
 
-#### 4.1 创建克隆卷
+#### 4.1 Create a Cloned Volume
 
 ```sh
 [root@node1 kubernetes]# cat pvcfromrbdsnap.yaml 
@@ -278,7 +278,7 @@ metadata:
 spec:
   storageClassName: ctdi-rbd-sc
   dataSource:
-    name: raw-block-pvc-snapshot  ##快照卷名
+    name: raw-block-pvc-snapshot  ##Snapshot volume name
     kind: VolumeSnapshot
     apiGroup: snapshot.storage.k8s.io
   accessModes:
@@ -296,11 +296,11 @@ raw-block-pvc       Bound    pvc-cc11c2ca-bac8-486a-be82-3f0f81703c43   1Gi     
 rbd-pvc-from-snap   Bound    pvc-2a955833-6a2b-4e21-83ae-84da54010a2e   3Gi        RWO            ctdi-rbd-sc    28s
 ```
 
-#### 4.2 查看CTDI 云磐管理系统中的克隆卷
+#### 4.2 View the cloned volumes in the CTDI Storage Management System
 
 ![image-5](./assets/4.2clone-block.png)
 
-###  5.  应用卷到POD
+###  5.  Apply a Volume to a POD
 
 ```sh
 apiVersion: v1

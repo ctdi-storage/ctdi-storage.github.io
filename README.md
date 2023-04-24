@@ -87,7 +87,7 @@ You need to obtain and deploy the complete deployment script, obtain the image, 
 
 #### 4.1 Obtain the Deployment Scripts
 
-You can obtain the deployment script through the CTDI CSI source code, located at [./deploy/block/kubernetes]()
+You can obtain the deployment script through the CTDI CSI source code, located at [./deploy/block/kubernetes](https://github.com/ctdi-storage/ctdi-storage.github.io/tree/master/deploy/block/kubernetes)
 
 - csi-provisioner-rbac.yaml
 - csi-nodeplugin-rbac.yaml
